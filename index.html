@@ -3,613 +3,617 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Triple Match" />
-  <meta name="theme-color" content="#0b1020" />
-  <title>Triple Match（6×6）</title>
-  <style>
-    :root{
-      --bg:#0b1020; --panel:#0f1733; --border:#223064; --soft:#101a3b;
-      --text:#eaf0ff; --muted:rgba(234,240,255,.85);
-      --tile:64px; --radius:16px; --gap:10px;
-      --grid:6;
-      --tray:7;
-      --lift:7px; /* fixed */
-    }
-    
+  <meta name="apple-mobile-web-app-title" content="どうぶつマッチ" />
+  <meta name="theme-color" content="#ffd6e7" />
+  <title>🌸 どうぶつマッチ 🌸</title>
 
-    /* ===== iPhone / touch optimization ===== */
-    html, body{ height:100%; }
-    body{
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ====== CUTE PASTEL THEME ====== */
+    :root {
+      --bg:        #fff5fb;
+      --bg2:       #ffedf6;
+      --panel:     #ffffffcc;
+      --panel2:    #fff0f8;
+      --border:    #f5c6e0;
+      --border2:   #fbbad5;
+      --text:      #5a3060;
+      --muted:     #9b6aad;
+      --accent1:   #ff85b3;
+      --accent2:   #ffa0c8;
+      --accent3:   #c77dff;
+      --green:     #6edfc0;
+      --yellow:    #ffd166;
+      --tile:      58px;
+      --radius:    18px;
+      --gap:       8px;
+      --grid:      6;
+      --tray:      7;
+      --lift:      6px;
+      --font:      'Nunito', 'Hiragino Maru Gothic Pro', 'M PLUS Rounded 1c', rounded, sans-serif;
+    }
+
+    /* ====== RESET & BASE ====== */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
       overscroll-behavior: none;
       touch-action: manipulation;
       -webkit-text-size-adjust: 100%;
       -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
-      overflow:hidden;
+      overflow: hidden;
     }
-    .wrap{
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, #ffe0f0 0%, transparent 55%),
+        radial-gradient(ellipse 70% 50% at 80% 15%, #e8d5ff 0%, transparent 50%),
+        radial-gradient(ellipse 90% 60% at 50% 90%, #d5f0ff 0%, transparent 55%),
+        var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100dvh;
+    }
+
+    /* ====== FLOATING DECO CLOUDS (CSS only) ====== */
+    body::before {
+      content: "☁️";
+      position: fixed;
+      font-size: 60px;
+      top: -10px; right: 10px;
+      opacity: 0.18;
+      animation: floatCloud 8s ease-in-out infinite alternate;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: "☁️";
+      position: fixed;
+      font-size: 40px;
+      top: 30px; left: 5px;
+      opacity: 0.12;
+      animation: floatCloud 11s ease-in-out infinite alternate-reverse;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes floatCloud {
+      from { transform: translateX(0px) translateY(0px); }
+      to   { transform: translateX(12px) translateY(6px); }
+    }
+
+    /* ====== WRAP ====== */
+    .wrap {
+      width: min(520px, 100%);
       padding:
-        calc(12px + env(safe-area-inset-top))
-        calc(12px + env(safe-area-inset-right))
-        calc(16px + env(safe-area-inset-bottom))
-        calc(12px + env(safe-area-inset-left));
-      height: 100dvh;
-      overflow:auto;
+        calc(8px + env(safe-area-inset-top))
+        calc(10px + env(safe-area-inset-right))
+        calc(10px + env(safe-area-inset-bottom))
+        calc(10px + env(safe-area-inset-left));
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+      overflow-y: auto;
+      max-height: 100dvh;
       -webkit-overflow-scrolling: touch;
     }
 
-    /* Responsive sizing fallback (JS will fine-tune) */
-    :root{
-      --tile: clamp(44px, 10.5vw, 72px);
-      --gap: clamp(6px, 1.8vw, 10px);
-      --radius: clamp(14px, 2.4vw, 18px);
-      --lift: clamp(6px, 1.8vw, 10px);
+    /* ====== HEADER ====== */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 6px 4px 2px;
     }
 
-    /* Prevent accidental selection while swiping/tapping */
-    .table, .grid, .tray, .cell, .slot, .tile{ user-select:none; }
-*{ box-sizing:border-box; }
-    body{
-      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
-      background:var(--bg); color:var(--text);
-      display:flex; justify-content:center;
-    }
-    .wrap{ width:min(1180px, 100%); padding:16px; display:grid; gap:12px; }
-    header{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-    h1{ margin:0; font-size:18px; letter-spacing:.2px; opacity:.95; }
-    .pill{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-      background:#141c36; border:1px solid #25305d; border-radius:999px;
-      padding:8px 12px;
-    }
-    .btns{ display:flex; gap:10px; flex-wrap:wrap; }
-    button{
-      background:#2a3cf0; border:none; color:white; padding:10px 12px;
-      border-radius:10px; cursor:pointer; font-weight:900;
-    }
-    button.secondary{ background:#1c2a63; }
-    button:active{ transform:translateY(1px); }
-
-    .layout{ display:grid; gap:12px; grid-template-columns: 1fr; }
-    @media (min-width: 980px){ .layout{ grid-template-columns: 1.25fr .75fr; align-items:start; } }
-
-    .board, .side{ background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:14px; }
-    .hint{
-      background:var(--soft); border:1px solid var(--border); border-radius:12px;
-      padding:10px 12px; font-size:13px; line-height:1.55; color:var(--muted);
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--accent1);
+      text-shadow: 0 2px 0 rgba(255,133,179,.25), 0 0 12px rgba(255,133,179,.15);
+      letter-spacing: .5px;
+      white-space: nowrap;
     }
 
-    .controls{
-      margin-top:10px;
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
-      background:#0b1126;
-      border:1px solid #1c2753;
-      border-radius:14px;
-      padding:10px 12px;
+    /* ====== PILL (score area) ====== */
+    .pill {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      box-shadow: 0 4px 14px rgba(255,133,179,.15);
     }
-    .controls .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .controls label{ color:var(--muted); font-size:13px; }
-    select{
-      background:#141c36;
-      border:1px solid #25305d;
-      color:var(--text);
-      border-radius:10px;
-      padding:8px 10px;
-      font-weight:800;
-      cursor:pointer;
+    .pill b { color: var(--text); }
+    .pill-sep { color: var(--border2); font-weight: 400; }
+
+    /* ====== BUTTONS ====== */
+    .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    button {
+      font-family: var(--font);
+      font-weight: 900;
+      font-size: 13px;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 13px;
+      cursor: pointer;
+      transition: transform .12s, filter .12s;
+      letter-spacing: .3px;
     }
-    .kbd{
-      font-size:12px;
-      color:rgba(234,240,255,.9);
-      border:1px solid rgba(255,255,255,.18);
-      background:rgba(255,255,255,.06);
-      padding:2px 6px;
-      border-radius:8px;
+    button:active { transform: scale(.94); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff85b3, #ff5f9e);
+      color: white;
+      box-shadow: 0 4px 14px rgba(255,95,158,.35), inset 0 1px 0 rgba(255,255,255,.35);
+    }
+    .btn-secondary {
+      background: linear-gradient(135deg, #ffe0f0, #ffc8e4);
+      color: var(--accent1);
+      box-shadow: 0 3px 10px rgba(255,133,179,.2);
+    }
+    button:hover { filter: brightness(1.07); }
+
+    /* ====== BOARD CARD ====== */
+    .board {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 26px;
+      padding: 10px;
+      box-shadow:
+        0 8px 32px rgba(255,133,179,.12),
+        inset 0 1px 0 rgba(255,255,255,.8);
+      backdrop-filter: blur(10px);
     }
 
-    /* Table */
-    .table{
-      margin-top:12px;
-      border-radius:14px;
+    /* ====== HINT ====== */
+    .hint {
+      background: linear-gradient(135deg, #fff0f8, #ffeaf5);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 8px 12px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .hint strong { color: var(--accent1); }
+
+    /* ====== CONTROLS ====== */
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      background: linear-gradient(135deg, #fff5fb, #fff0f8);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      margin-bottom: 6px;
+    }
+    .controls .row { display: flex; gap: 8px; align-items: center; }
+    .controls label { font-size: 12px; color: var(--muted); font-weight: 700; }
+
+    select {
+      font-family: var(--font);
+      background: white;
+      border: 2px solid var(--border2);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 5px 8px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* ====== TABLE (grid container) ====== */
+    .table {
+      border-radius: 20px;
       background:
-        radial-gradient(1000px 460px at 30% 20%, rgba(70,213,255,.08), transparent 55%),
-        radial-gradient(900px 460px at 70% 30%, rgba(156,255,197,.08), transparent 55%),
-        radial-gradient(900px 460px at 45% 80%, rgba(182,161,255,.06), transparent 60%),
-        #0b1126;
-      border:1px solid #1c2753;
-      padding:12px;
-      overflow:hidden;
-      user-select:none;
-      touch-action:manipulation;
+        radial-gradient(ellipse 70% 50% at 30% 25%, rgba(255,182,229,.18), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 70% 30%, rgba(200,220,255,.15), transparent 55%),
+        radial-gradient(ellipse 80% 60% at 45% 85%, rgba(180,255,220,.12), transparent 60%),
+        rgba(255,250,253,.85);
+      border: 2px solid var(--border);
+      padding: 10px;
+      box-shadow:
+        0 6px 24px rgba(255,133,179,.10),
+        inset 0 1px 0 rgba(255,255,255,.9);
+      overflow: hidden;
+      touch-action: manipulation;
+      user-select: none;
     }
-    .grid{
-      display:grid;
+
+    .grid {
+      display: grid;
       grid-template-columns: repeat(var(--grid), var(--tile));
-      grid-template-rows: repeat(var(--grid), var(--tile));
+      grid-template-rows:    repeat(var(--grid), var(--tile));
       gap: var(--gap);
-      justify-content:center;
-    }
-    .cell{
-      width:var(--tile); height:var(--tile);
-      border-radius: var(--radius);
-      border:1px dashed rgba(255,255,255,.16);
-      background: rgba(255,255,255,.035);
-      position:relative;
-      overflow:visible;
-    }
-    .cell.hole{
-      border:1px dashed rgba(255,255,255,.08);
-      background: rgba(255,255,255,.012);
-      filter: brightness(.9);
-    }
-    .stack{
-      position:absolute;
-      inset:0;
-      width:var(--tile); height:var(--tile);
+      justify-content: center;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Tiles (top only is a real tile) */
-    .tile{
-      position:absolute;
-      width:var(--tile);
-      height:var(--tile);
-      border-radius: var(--radius);
-      border:1px solid rgba(255,255,255,.22);
-      background:
-        radial-gradient(140px 70px at 30% 20%, rgba(255,255,255,.22), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18)),
-        var(--c, #46d5ff);
-      box-shadow:
-        0 14px 26px rgba(0,0,0,.38),
-        inset 0 0 0 2px rgba(0,0,0,.14);
-      display:grid;
-      place-items:center;
-      font-size:46px; /* big */
-      line-height:1;
-      text-shadow: 0 2px 0 rgba(0,0,0,.18), 0 0 8px rgba(0,0,0,.08);
-      transform: translate(0px,0px) scale(1);
-      transition: transform .12s ease, filter .12s ease, opacity .12s ease, box-shadow .12s ease;
-      cursor:pointer;
-    }
-    .tile:active{ transform: translate(0px,1px) scale(.99); }
-
-    /* Always highlight selectable top tiles */
-    .tile.selectable{
-      box-shadow:
-        0 14px 26px rgba(0,0,0,.38),
-        inset 0 0 0 2px rgba(0,0,0,.14),
-        0 0 0 3px rgba(156,255,197,.44),
-        0 0 8px rgba(156,255,197,.12);
-    }
-    .tile.disabled{
-      cursor:not-allowed;
-      filter: grayscale(.55) brightness(.85);
-      opacity:.6;
-      box-shadow:
-        0 14px 26px rgba(0,0,0,.30),
-        inset 0 0 0 2px rgba(0,0,0,.12);
-    }
-
-    /* Peek (hidden layers) — small corner icons to reduce blur */
-    .peek{
-      position:absolute;
-      width:26px; height:26px;
-      border-radius:10px;
-      display:grid; place-items:center;
-      font-size:18px;
-      line-height:1;
-      text-shadow:none;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.28);
-      color: rgba(255,255,255,.95);
-      box-shadow: 0 10px 18px rgba(0,0,0,.24);
-      pointer-events:none;
-      transform: translate(var(--dx,0px), var(--dy,0px));
-      opacity:.95;
-    }
-    .peek.back1{
-      --dx: calc(var(--lift) * -1);
-      --dy: calc(var(--lift) * -1);
-      opacity:.82;
-      filter: grayscale(.15) brightness(.92);
-    }
-    .peek.back2{
-      --dx: calc(var(--lift) * -2);
-      --dy: calc(var(--lift) * -2);
-      opacity:.68;
-      filter: grayscale(.28) brightness(.85);
-    }
-    .peek::after{
-      content:"";
-      position:absolute; inset:0;
-      border-radius:10px;
-      box-shadow: inset 0 0 0 2px rgba(0,0,0,.15);
-    }
-
-    
-
-    /* Tray */
-    .trayWrap{ margin-top:12px; display:grid; gap:10px; }
-    .trayTitle{ display:flex; align-items:center; justify-content:space-between; color:var(--muted); font-size:13px; }
-    .tray{
-      display:grid;
-      grid-template-columns: repeat(var(--tray), var(--tile));
-      gap: var(--gap);
-      justify-content:center;
-      padding:12px;
-      border-radius:14px;
-      background:#0b1126;
-      border:1px solid #1c2753;
-      min-height: calc(var(--tile) + 24px);
-    }
-    .slot{
-      width:var(--tile);
-      height:var(--tile);
-      border-radius: var(--radius);
-      border:1px dashed rgba(255,255,255,.18);
-      background: rgba(255,255,255,.03);
-      position:relative;
-      overflow:hidden;
-    }
-    .slot .tile{
-      position:absolute; inset:0;
-      transform:none;
-      font-size:44px;
-      cursor:default;
-      box-shadow: inset 0 0 0 2px rgba(0,0,0,.14);
-    }
-
-    .toast{ min-height:18px; font-size:13px; color:var(--muted); }
-    .toast.ok{ color:#9cffc5; }
-    .toast.bad{ color:#ff8c8c; }
-
-    /* Modal */
-    .overlay{
-      position:fixed; inset:0; display:none; place-items:center;
-      padding:16px; background:rgba(0,0,0,.55);
-    }
-    .overlay.show{ display:grid; }
-    .modal{
-      width:min(520px, 100%);
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:18px;
-    }
-    .modal h2{ margin:0 0 10px; font-size:18px; }
-    .modal p{ margin:0 0 14px; color:var(--muted); line-height:1.6; }
-    .modal .actions{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
-
-    /* Legend */
-    .legendGrid{ display:flex; flex-wrap:wrap; gap:8px; }
-    .chip{
-      display:flex; align-items:center; gap:8px;
-      border:1px solid var(--border);
-      background:var(--soft);
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:12px;
-      color:var(--muted);
-    }
-    .dot{
-      width:16px; height:16px; border-radius:6px;
-      background: var(--c, #46d5ff);
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow: inset 0 0 0 2px rgba(0,0,0,.12);
-    }
-  
-    /* Clear layer preview: render the actual hidden tiles behind the top tile */
-    .peek{ display:none !important; }
-
-    /* Responsive tile sizing (no hardcoded px) */
-    .tile{
-      position:absolute;
+    /* ====== CELLS ====== */
+    .cell {
       width: var(--tile);
       height: var(--tile);
-      border-radius: calc(var(--radius) + 2px);
-      display:grid;
-      place-items:center;
-      border:1px solid rgba(0,0,0,.40);
-      box-shadow: 0 12px 22px rgba(0,0,0,.35);
-      user-select:none;
+      border-radius: var(--radius);
+      border: 2px dashed rgba(255,182,213,.38);
+      background: rgba(255,255,255,.45);
+      position: relative;
+      overflow: visible;
+    }
+    .cell.hole {
+      border: 2px dashed rgba(255,182,213,.15);
+      background: rgba(255,255,255,.12);
+    }
+
+    /* ====== TILES ====== */
+    .tile {
+      position: absolute;
+      width: var(--tile);
+      height: var(--tile);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(255,255,255,.65);
+      box-shadow:
+        0 5px 15px rgba(0,0,0,.10),
+        inset 0 2px 0 rgba(255,255,255,.70),
+        inset 0 -3px 0 rgba(0,0,0,.06);
+      user-select: none;
       touch-action: manipulation;
-    }
-    .tile .icon{
-      font-size: calc(var(--tile) * 0.82);
-      transform: scale(1.00);
-      line-height:1;
+      background: linear-gradient(160deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.0) 60%), var(--c, #ffb3d4);
     }
 
-    /* Stack offsets scale with tile size (keeps the 3-layer look) */
-    .tile.layerTop{ left: 0px; top: 0px; z-index:3; cursor:pointer; }
-    .tile.layerMid{ left: calc(var(--tile) * 0.24); top: calc(var(--tile) * 0.24); z-index:2; opacity:.90; pointer-events:none; }
-    .tile.layerBot{ left: calc(var(--tile) * 0.48); top: calc(var(--tile) * 0.48); z-index:1; opacity:.82; pointer-events:none; }
-    .tile.disabled{ filter: grayscale(.2) brightness(.85); cursor:not-allowed; }
-  
-    /* Tray fit on narrow screens */
-    @media (max-width: 520px){
-      .tray{
-        grid-template-columns: repeat(var(--tray), minmax(0, 1fr));
-        padding:10px;
-      }
-      .slot{
-        width:auto;
-        height:auto;
-        aspect-ratio: 1 / 1;
-      }
-      .slot .tile{
-        width:100%;
-        height:100%;
-        font-size: calc(var(--tile) * 0.72);
-      }
+    .tile .icon {
+      font-size: calc(var(--tile) * 0.75);
+      line-height: 1;
+      transform-origin: center;
+      transition: transform .1s;
     }
 
-</style>
-
-  <style>
-    /* ===== Rich UI pack (standalone, no external assets) ===== */
-    :root{
-      --bg0:#070a14;
-      --bg1:#0b1020;
-      --panel2: rgba(18, 26, 54, .85);
-      --glass: rgba(255,255,255,.06);
-      --glass2: rgba(255,255,255,.10);
-      --stroke: rgba(255,255,255,.18);
-      --stroke2: rgba(255,255,255,.28);
-      --shadow: rgba(0,0,0,.45);
-      --shadow2: rgba(0,0,0,.55);
-      --glow: rgba(70,213,255,.18);
-      --glow2: rgba(156,255,197,.18);
-      --glow3: rgba(182,161,255,.16);
+    /* Layer offsets */
+    .tile.layerTop { left: 0; top: 0; z-index: 3; cursor: pointer; }
+    .tile.layerMid {
+      left: calc(var(--tile) * 0.22);
+      top:  calc(var(--tile) * 0.22);
+      z-index: 2; opacity: .88;
+      pointer-events: none;
+      filter: brightness(.95) saturate(.9);
+    }
+    .tile.layerBot {
+      left: calc(var(--tile) * 0.44);
+      top:  calc(var(--tile) * 0.44);
+      z-index: 1; opacity: .78;
+      pointer-events: none;
+      filter: brightness(.90) saturate(.85);
     }
 
-    body{
+    /* Hover / active */
+    .tile.layerTop {
+      transition: transform .12s cubic-bezier(.34,1.56,.64,1), filter .12s, box-shadow .12s;
+    }
+    .tile.layerTop:hover {
+      transform: translateY(-3px) scale(1.10) rotate(-2deg);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.14),
+        0 0 0 3px rgba(255,133,179,.40),
+        0 0 16px rgba(255,133,179,.20),
+        inset 0 2px 0 rgba(255,255,255,.75);
+    }
+    .tile.disabled {
+      opacity: .5 !important;
+      filter: grayscale(.35) brightness(.88);
+      cursor: not-allowed;
+    }
+
+    /* ====== TRAY ====== */
+    .trayWrap { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .trayTitle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      padding: 0 2px;
+    }
+
+    .tray {
+      display: grid;
+      grid-template-columns: repeat(var(--tray), var(--tile));
+      gap: var(--gap);
+      justify-content: center;
+      padding: 10px;
+      border-radius: 18px;
       background:
-        radial-gradient(1200px 700px at 18% 22%, rgba(70,213,255,.12), transparent 55%),
-        radial-gradient(1100px 650px at 82% 30%, rgba(255,122,165,.10), transparent 52%),
-        radial-gradient(900px 520px at 50% 86%, rgba(156,255,197,.10), transparent 55%),
-        radial-gradient(1200px 900px at 50% 45%, rgba(182,161,255,.08), transparent 60%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      min-height:100vh;
+        radial-gradient(ellipse 70% 60% at 50% 50%, rgba(255,182,229,.12), transparent 70%),
+        rgba(255,255,255,.75);
+      border: 2px solid var(--border);
+      min-height: calc(var(--tile) + 20px);
+      box-shadow: 0 4px 16px rgba(255,133,179,.10), inset 0 1px 0 rgba(255,255,255,.9);
     }
 
-    .board, .side{
-      background: linear-gradient(180deg, rgba(18,26,54,.92), rgba(10,16,38,.88));
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow:
-        0 22px 44px rgba(0,0,0,.40),
-        inset 0 1px 0 rgba(255,255,255,.06);
-      backdrop-filter: blur(10px);
-    }
-
-    .pill{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: 0 10px 26px rgba(0,0,0,.30);
-      backdrop-filter: blur(10px);
-    }
-
-    button{
-      background: linear-gradient(180deg, rgba(42,60,240,1), rgba(35,48,200,1));
-      box-shadow: 0 12px 26px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.20);
-    }
-    button.secondary{
-      background: linear-gradient(180deg, rgba(28,42,99,1), rgba(18,28,75,1));
-    }
-    button:hover{ filter: brightness(1.06); }
-    button:active{ transform: translateY(1px) scale(.995); }
-
-    .table{
-      position:relative;
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow:
-        0 22px 44px rgba(0,0,0,.35),
-        inset 0 0 0 1px rgba(255,255,255,.06);
+    .slot {
+      width: var(--tile);
+      height: var(--tile);
+      border-radius: var(--radius);
+      border: 2px dashed rgba(255,182,213,.38);
+      background: rgba(255,255,255,.40);
+      position: relative;
       overflow: hidden;
     }
-    .table::before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(900px 520px at 30% 20%, rgba(70,213,255,.12), transparent 55%),
-        radial-gradient(900px 520px at 70% 35%, rgba(156,255,197,.10), transparent 55%),
-        radial-gradient(900px 520px at 45% 85%, rgba(182,161,255,.09), transparent 60%);
-      filter: blur(6px);
-      opacity: .9;
-      pointer-events:none;
-    }
-    .grid{ position:relative; z-index:1; }
-
-    .cell{
-      border: 1px dashed rgba(255,255,255,.14);
-      background: rgba(255,255,255,.03);
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
-    }
-    .cell.hole{
-      border:1px dashed rgba(255,255,255,.08);
-      background: rgba(255,255,255,.012);
+    .slot .tile {
+      position: absolute; inset: 0;
+      transform: none;
+      cursor: default;
+      width: 100%; height: 100%;
     }
 
-    /* Top tile hover + selectable glow */
-    .tile.layerTop{
-      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease, opacity .12s ease;
-      will-change: transform, filter;
-      border: 2px solid rgba(255,255,255,.22);
-      box-shadow:
-        0 18px 32px rgba(0,0,0,.40),
-        inset 0 3px 8px rgba(255,255,255,.22),
-        inset 0 -10px 16px rgba(0,0,0,.28);
+    /* ====== TOAST ====== */
+    .toast {
+      min-height: 18px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: center;
     }
-    .tile.layerTop:hover{
-      transform: translateY(-2px) scale(1.08) rotate(-1.5deg);
-      filter: brightness(1.10) saturate(1.05);
-      box-shadow:
-        0 24px 40px rgba(0,0,0,.44),
-        0 0 0 3px rgba(156,255,197,.26),
-        0 0 18px rgba(156,255,197,.14),
-        inset 0 3px 9px rgba(255,255,255,.22),
-        inset 0 -10px 16px rgba(0,0,0,.28);
-    }
-    .tile.disabled{
-      opacity:.55 !important;
-      filter: grayscale(.25) brightness(.82);
+    .toast.ok  { color: #3dbf90; }
+    .toast.bad { color: #ff6b6b; }
+
+    /* ====== SIDE PANEL ====== */
+    .side {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      padding: 10px 12px;
+      box-shadow: 0 6px 20px rgba(255,133,179,.10);
     }
 
-    /* Depth layers look like stacked cards */
-    .tile.layerMid{
-      filter: brightness(.96) saturate(.95);
-      box-shadow: 0 14px 26px rgba(0,0,0,.30);
-      border: 2px solid rgba(255,255,255,.14);
+    .legendGrid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip {
+      display: flex; align-items: center; gap: 6px;
+      border: 1.5px solid var(--border);
+      background: white;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
     }
-    .tile.layerBot{
-      filter: brightness(.92) saturate(.92);
-      box-shadow: 0 12px 22px rgba(0,0,0,.25);
-      border: 2px solid rgba(255,255,255,.10);
+    .dot {
+      width: 14px; height: 14px; border-radius: 6px;
+      background: var(--c, #ffb3d4);
+      border: 1.5px solid rgba(255,255,255,.7);
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
     }
 
-    /* Pop animation (pick) */
+    /* ====== LAYOUT ====== */
+    .layout { display: flex; flex-direction: column; gap: 8px; }
+    @media (min-width: 900px) {
+      .layout { flex-direction: row; align-items: flex-start; }
+      .board { flex: 1.4; }
+      .side  { flex: 0.8; }
+    }
+
+    /* ====== TRAY RESPONSIVE ====== */
+    @media (max-width: 480px) {
+      .tray {
+        grid-template-columns: repeat(var(--tray), minmax(0, 1fr));
+        padding: 8px;
+      }
+      .slot { width: auto; height: auto; aspect-ratio: 1/1; }
+      .slot .tile { width: 100%; height: 100%; }
+    }
+
+    /* ====== SOUND TOGGLE ====== */
+    .soundToggle {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 12px; font-weight: 800; color: var(--muted);
+      user-select: none;
+    }
+    .switch {
+      width: 42px; height: 24px; border-radius: 999px;
+      background: rgba(0,0,0,.10);
+      border: 1.5px solid rgba(0,0,0,.08);
+      position: relative; cursor: pointer;
+      transition: background .18s;
+    }
+    .switch::after {
+      content: "";
+      position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; border-radius: 999px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,.18);
+      transition: transform .18s;
+    }
+    .switch.on { background: linear-gradient(135deg, #ff85b3, #ff5f9e); border-color: rgba(255,95,158,.4); }
+    .switch.on::after { transform: translateX(18px); }
+
+    /* ====== OVERLAY / MODAL ====== */
+    .overlay {
+      position: fixed; inset: 0;
+      display: none; place-items: center;
+      padding: 16px;
+      background: rgba(80,0,40,.38);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+    }
+    .overlay.show { display: grid; }
+
+    .modal {
+      width: min(380px, 100%);
+      background: linear-gradient(160deg, #fff5fb, #ffeaf5);
+      border: 2.5px solid var(--border2);
+      border-radius: 28px;
+      padding: 22px 20px 18px;
+      box-shadow: 0 20px 60px rgba(200,50,120,.20), inset 0 1px 0 rgba(255,255,255,.9);
+      text-align: center;
+    }
+    .modal h2 {
+      margin: 0 0 10px;
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--accent1);
+    }
+    .modal p { margin: 0 0 16px; color: var(--muted); line-height: 1.65; font-size: 14px; }
+    .modal .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .modal-emoji { font-size: 48px; margin-bottom: 6px; display: block; }
+
+    /* ====== ANIMATIONS ====== */
     @keyframes pop {
-      0% { transform: translateY(0) scale(.80); }
-      55% { transform: translateY(-4px) scale(1.18); }
-      100% { transform: translateY(0) scale(1.00); }
+      0%   { transform: scale(.75); }
+      55%  { transform: scale(1.22); }
+      100% { transform: scale(1.00); }
     }
-    .popped{ animation: pop .22s ease-out; }
+    .popped { animation: pop .22s cubic-bezier(.34,1.56,.64,1); }
 
-    /* Clear burst animation */
     @keyframes burst {
-      0% { transform: scale(.80); opacity: 0; }
-      20%{ opacity: 1; }
-      100% { transform: scale(1.35); opacity: 0; }
+      0%   { transform: translate(-50%,-50%) scale(.7); opacity: 0; }
+      20%  { opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; }
     }
-    .burst{
+    .burst {
       position: fixed;
       width: 10px; height: 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,.8);
-      box-shadow: 0 0 18px rgba(255,255,255,.25);
+      pointer-events: none;
       animation: burst .55s ease-out forwards;
-      pointer-events:none;
       z-index: 9999;
     }
 
-    /* Sparkle */
     @keyframes sparkleUp {
-      0% { transform: translate(-50%,-50%) translateY(0) scale(.9); opacity: 0; }
-      10%{ opacity: 1; }
-      100% { transform: translate(-50%,-50%) translateY(-42px) scale(1.15); opacity: 0; }
+      0%   { transform: translate(-50%,-50%) scale(.6); opacity: 0; }
+      20%  { opacity: 1; }
+      100% { transform: translate(-50%, -110%) scale(1.2); opacity: 0; }
     }
-    .sparkle{
+    .sparkle {
       position: fixed;
-      left: 0; top: 0;
       transform: translate(-50%,-50%);
-      font-size: 22px;
-      filter: drop-shadow(0 8px 16px rgba(0,0,0,.35));
+      font-size: 20px;
+      pointer-events: none;
       animation: sparkleUp .8s ease-out forwards;
-      pointer-events:none;
       z-index: 9999;
     }
 
-    /* Tray polish */
-    .tray{
-      background:
-        radial-gradient(900px 420px at 20% 30%, rgba(70,213,255,.08), transparent 55%),
-        radial-gradient(900px 420px at 80% 30%, rgba(156,255,197,.07), transparent 55%),
-        rgba(11,17,38,.85);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: 0 18px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
-      backdrop-filter: blur(10px);
+    @keyframes heartFloat {
+      0%   { transform: translate(-50%,-50%) scale(.5) rotate(-10deg); opacity: 0; }
+      30%  { opacity: 1; }
+      100% { transform: translate(-50%,-140%) scale(1.1) rotate(10deg); opacity: 0; }
+    }
+    .heartFloat {
+      position: fixed;
+      font-size: 18px;
+      pointer-events: none;
+      animation: heartFloat .9s ease-out forwards;
+      z-index: 9999;
     }
 
-    /* Sound toggle */
-    .soundToggle{
-      display:flex; align-items:center; gap:10px;
-      color: rgba(234,240,255,.88);
-      font-size: 13px;
-      user-select:none;
-    }
-    .switch{
-      width: 46px; height: 26px; border-radius: 999px;
-      background: rgba(255,255,255,.10);
-      border: 1px solid rgba(255,255,255,.14);
-      position: relative;
-      cursor: pointer;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
-    }
-    .switch::after{
-      content:"";
-      position:absolute; top: 3px; left: 3px;
-      width: 20px; height: 20px; border-radius: 999px;
-      background: rgba(255,255,255,.88);
-      box-shadow: 0 10px 18px rgba(0,0,0,.25);
-      transition: transform .15s ease, background .15s ease;
-    }
-    .switch.on{
-      background: rgba(156,255,197,.18);
-      border-color: rgba(156,255,197,.30);
-    }
-    .switch.on::after{
-      transform: translateX(20px);
-      background: rgba(255,255,255,.95);
+    @keyframes tilePop {
+      0%   { transform: translateY(0) scale(1); }
+      40%  { transform: translateY(-6px) scale(1.15) rotate(-3deg); }
+      100% { transform: translateY(0) scale(1); }
     }
 
-    /* Reduce motion preference */
-    @media (prefers-reduced-motion: reduce){
-      .tile.layerTop:hover{ transform:none; }
-      .popped{ animation:none; }
-      .burst{ animation:none; opacity:0; }
-      .sparkle{ animation:none; opacity:0; }
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25%  { transform: rotate(-6deg); }
+      75%  { transform: rotate(6deg); }
+    }
+
+    /* Star decoration */
+    .star-deco {
+      position: fixed;
+      font-size: 14px;
+      pointer-events: none;
+      opacity: 0;
+      animation: starDeco 1.2s ease-out forwards;
+      z-index: 9999;
+    }
+    @keyframes starDeco {
+      0%   { opacity: 0; transform: translate(-50%,-50%) scale(0) rotate(0deg); }
+      40%  { opacity: 1; transform: translate(-50%,-50%) scale(1.3) rotate(180deg); }
+      100% { opacity: 0; transform: translate(-50%,-120%) scale(0.5) rotate(360deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .tile.layerTop:hover { transform: none; }
+      .popped, .burst, .sparkle, .heartFloat, .star-deco { animation: none; opacity: 0; }
     }
   </style>
-
 </head>
+
 <body>
   <div class="wrap">
     <header>
-      <h1>トリプルマッチ（6×6）</h1>
+      <h1>🌸 どうぶつマッチ</h1>
       <div class="pill">
-        <div>Score: <b id="score">0</b></div>
-        <div>Clears: <b id="clears">0</b></div>
-        <div>Best: <b id="best">0</b>        <div>Tiles: <b id="tilesRemain">0</b> / <b id="tilesTotal">0</b></div>
-        <div>Removed: <b id="tilesRemoved">0</b></div>
+        <span>⭐<b id="score">0</b></span>
+        <span class="pill-sep">·</span>
+        <span>💫<b id="clears">0</b></span>
+        <span class="pill-sep">·</span>
+        <span>🏆<b id="best">-</b></span>
       </div>
       <div class="btns">
-        <button id="newGame">New Game</button>
-        <button class="secondary" id="shuffle">Shuffle</button>
-        <button class="secondary" id="undo">Undo</button>
+        <button class="btn-primary" id="newGame">🎮 New</button>
+        <button class="btn-secondary" id="shuffle">🔀</button>
+        <button class="btn-secondary" id="undo">↩️</button>
       </div>
     </header>
 
     <div class="layout">
       <section class="board">
         <div class="hint">
-          遊び方：盤面の<strong>一番上のタイルだけ</strong>選べます。選んだタイルは下のトレイに入ります。<br>
-          <strong>同じ動物が3つ</strong>揃うと自動で消えます。トレイは<strong>最大7</strong>。<br>
-          
+          💡 <strong>いちばん上のタイル</strong>だけ選べるよ！<br>
+          <strong>おなじどうぶつが3つ</strong>そろうと自動で消えます✨ トレイは最大 <strong>7つ</strong>まで。
         </div>
 
-        <div class="controls" aria-label="controls">
+        <div class="controls">
           <div class="row">
-            <label for="difficulty">難易度</label>
+            <label for="difficulty">難易度 🌟</label>
             <select id="difficulty">
-              <option value="1" selected>1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
+              <option value="1" selected>やさしい</option>
+              <option value="2">ふつう</option>
+              <option value="3">むずかしい</option>
+              <option value="4">超難しい</option>
+              <option value="5">鬼</option>
             </select>
           </div>
           <div class="row">
-
-            <div class="soundToggle" title="効果音のON/OFF">
-              <span>Sound</span>
+            <div class="soundToggle" title="効果音 ON/OFF">
+              <span>🎵</span>
               <div id="soundSwitch" class="switch on" role="switch" aria-checked="true" tabindex="0"></div>
               <span id="soundLabel">ON</span>
             </div>
-
           </div>
+        </div>
+
+        <!-- Tile counter -->
+        <div style="display:flex;gap:8px;justify-content:flex-end;padding:2px 4px;font-size:11px;font-weight:700;color:var(--muted);">
+          <span>🐾 残り <b id="tilesRemain">0</b>/<b id="tilesTotal">0</b></span>
+          <span>💖 消した <b id="tilesRemoved">0</b></span>
         </div>
 
         <div class="table">
@@ -618,7 +622,7 @@
 
         <div class="trayWrap">
           <div class="trayTitle">
-            <span>Tray (max 7)</span>
+            <span>🧺 トレイ</span>
             <span id="trayInfo">0 / 7</span>
           </div>
           <div class="tray" id="tray" aria-label="tray"></div>
@@ -627,24 +631,25 @@
       </section>
 
       <aside class="side">
-        <div class="hint">種類（使用中）</div>
+        <div class="hint">🐾 つかっているどうぶつ</div>
         <div class="legendGrid" id="legend"></div>
-        <div class="hint" style="margin-top:12px;">
-          セル右上の数字＝そのセルの<strong>残枚数</strong>。<br>
-          角の小アイコン＝下にあるタイルの種類。<br>
-          ハイライト＝今取れるタイル（最上段）。
+        <div class="hint" style="margin-top:8px;font-size:11px;">
+          ハイライトされたタイル＝今とれるよ！<br>
+          かさなりタイルの数字＝残り枚数 📦
         </div>
       </aside>
     </div>
   </div>
 
+  <!-- Game Over / Clear Overlay -->
   <div class="overlay" id="overlay">
     <div class="modal">
+      <span class="modal-emoji" id="modalEmoji">🎉</span>
       <h2 id="overTitle">Game Over</h2>
       <p id="overText"></p>
       <div class="actions">
-        <button class="secondary" id="closeOver">Close</button>
-        <button id="restartOver">Restart</button>
+        <button class="btn-secondary" id="closeOver">とじる</button>
+        <button class="btn-primary" id="restartOver">もういちど！</button>
       </div>
     </div>
   </div>
@@ -652,47 +657,34 @@
 <script>
 (() => {
 
-  // ===== iPhone fit: dynamic tile size (fits both 6x6 board and 7-slot tray) =====
+  /* ===== Fit tile size to screen ===== */
   const rootStyle = document.documentElement.style;
   function fitToScreen(){
-    // available width inside the wrap
     const vw = Math.max(320, window.innerWidth || 375);
-    const padding = 24; // approximate; safe-area padding handled by CSS
-    const maxW = vw - padding;
+    const BOARD_PADDING = 44; // wrap padding + board padding
+    const maxW = vw - BOARD_PADDING;
 
-    // Choose a gap that feels good on phones
-    const gap = Math.max(6, Math.min(10, Math.floor(vw * 0.018)));
+    const gap  = Math.max(6, Math.min(9, Math.floor(vw * 0.016)));
     rootStyle.setProperty("--gap", gap + "px");
 
-    const grid = 6;
-    const trayN = 7;
+    const GRID = 6, TRAY = 7;
+    const tileGrid = Math.floor((maxW - gap * (GRID - 1)) / GRID);
+    const tileTray = Math.floor((maxW - gap * (TRAY - 1)) / TRAY);
+    let tile = Math.min(tileGrid, tileTray);
+    tile = Math.max(42, Math.min(68, tile));
 
-    const tileForGrid = Math.floor((maxW - gap * (grid - 1)) / grid);
-    const tileForTray = Math.floor((maxW - gap * (trayN - 1)) / trayN);
-
-    // pick the tighter one so the tray never overflows
-    let tile = Math.min(tileForGrid, tileForTray);
-
-    // clamp for usability
-    tile = Math.max(44, Math.min(72, tile));
-
-    rootStyle.setProperty("--tile", tile + "px");
-    rootStyle.setProperty("--radius", Math.max(14, Math.min(18, Math.floor(tile * 0.26))) + "px");
+    rootStyle.setProperty("--tile",   tile + "px");
+    rootStyle.setProperty("--radius", Math.max(14, Math.min(20, Math.floor(tile * 0.28))) + "px");
   }
-  window.addEventListener("resize", fitToScreen, { passive:true });
-  window.addEventListener("orientationchange", () => setTimeout(fitToScreen, 80), { passive:true });
+  window.addEventListener("resize", fitToScreen, { passive: true });
+  window.addEventListener("orientationchange", () => setTimeout(fitToScreen, 80), { passive: true });
   fitToScreen();
 
-
-  // ===== Rich UI: WebAudio SFX (standalone) =====
-  // iOS/Safari requires audio context after a user gesture. We lazily init on first interaction.
+  /* ===== WebAudio SFX ===== */
   let audioCtx = null;
   let soundOn = true;
-  const soundKey = "triple_match_sound_on_v1";
-  try{
-    const saved = localStorage.getItem(soundKey);
-    if(saved !== null) soundOn = (saved === "1");
-  }catch(e){}
+  const soundKey = "triple_match_sound_on_v2";
+  try { const s = localStorage.getItem(soundKey); if(s !== null) soundOn = s === "1"; } catch(e){}
 
   function initAudio(){
     if(audioCtx) return;
@@ -701,81 +693,71 @@
     audioCtx = new Ctx();
   }
 
-  function playTone({freq=440, dur=0.08, type="sine", gain=0.06, detune=0, when=0}){
+  function playTone({ freq=440, dur=0.08, type="sine", gain=0.06, detune=0, when=0 }){
     if(!soundOn) return;
     initAudio();
     if(!audioCtx) return;
-    if(audioCtx.state === "suspended"){
-      // resume on gesture if possible
-      audioCtx.resume().catch(()=>{});
-    }
+    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
     const t0 = audioCtx.currentTime + when;
-
     const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
+    const g   = audioCtx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, t0);
     osc.detune.setValueAtTime(detune, t0);
-
-    // Envelope
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-
-    osc.connect(g);
-    g.connect(audioCtx.destination);
-
-    osc.start(t0);
-    osc.stop(t0 + dur + 0.02);
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.02);
   }
 
   function playSfx(name){
     if(!soundOn) return;
-    // Simple, pleasant arcade-style SFX
     if(name === "pick"){
-      playTone({freq:520, dur:0.06, type:"triangle", gain:0.05});
-      playTone({freq:780, dur:0.05, type:"triangle", gain:0.03, when:0.02});
-    }else if(name === "clear"){
-      playTone({freq:740, dur:0.07, type:"sine", gain:0.06});
-      playTone({freq:980, dur:0.07, type:"sine", gain:0.05, when:0.03});
-      playTone({freq:1220, dur:0.08, type:"sine", gain:0.04, when:0.06});
-    }else if(name === "combo"){
-      playTone({freq:660, dur:0.08, type:"square", gain:0.04});
-      playTone({freq:880, dur:0.08, type:"square", gain:0.04, when:0.05});
-      playTone({freq:1320, dur:0.10, type:"square", gain:0.035, when:0.10});
-    }else if(name === "shuffle"){
-      playTone({freq:420, dur:0.10, type:"sawtooth", gain:0.03});
-      playTone({freq:320, dur:0.10, type:"sawtooth", gain:0.02, when:0.05});
-    }else if(name === "undo"){
-      playTone({freq:520, dur:0.08, type:"triangle", gain:0.04});
-      playTone({freq:420, dur:0.10, type:"triangle", gain:0.03, when:0.06});
-    }else if(name === "win"){
-      playTone({freq:784, dur:0.10, type:"sine", gain:0.06});
-      playTone({freq:988, dur:0.10, type:"sine", gain:0.055, when:0.10});
-      playTone({freq:1175, dur:0.14, type:"sine", gain:0.05, when:0.20});
-    }else if(name === "lose"){
-      playTone({freq:220, dur:0.14, type:"sawtooth", gain:0.05});
-      playTone({freq:164, dur:0.16, type:"sawtooth", gain:0.045, when:0.12});
-    }else if(name === "error"){
-      playTone({freq:180, dur:0.09, type:"square", gain:0.05});
-      playTone({freq:140, dur:0.09, type:"square", gain:0.05, when:0.05});
+      playTone({freq:660, dur:0.06, type:"sine",     gain:0.06});
+      playTone({freq:880, dur:0.05, type:"sine",     gain:0.04, when:0.03});
+    } else if(name === "clear"){
+      playTone({freq:784, dur:0.07, type:"sine",     gain:0.06});
+      playTone({freq:1047,dur:0.07, type:"sine",     gain:0.05, when:0.04});
+      playTone({freq:1319,dur:0.09, type:"sine",     gain:0.04, when:0.08});
+    } else if(name === "combo"){
+      playTone({freq:784, dur:0.08, type:"triangle", gain:0.055});
+      playTone({freq:988, dur:0.08, type:"triangle", gain:0.05, when:0.06});
+      playTone({freq:1319,dur:0.10, type:"triangle", gain:0.045, when:0.12});
+    } else if(name === "shuffle"){
+      playTone({freq:440, dur:0.09, type:"sine",     gain:0.04});
+      playTone({freq:330, dur:0.09, type:"sine",     gain:0.03, when:0.06});
+    } else if(name === "undo"){
+      playTone({freq:524, dur:0.08, type:"sine",     gain:0.04});
+      playTone({freq:440, dur:0.09, type:"sine",     gain:0.03, when:0.06});
+    } else if(name === "win"){
+      [784,988,1175,1568].forEach((f,i) =>
+        playTone({freq:f, dur:0.12, type:"sine", gain:0.055, when:i*0.10}));
+    } else if(name === "lose"){
+      playTone({freq:330, dur:0.14, type:"sawtooth", gain:0.05});
+      playTone({freq:220, dur:0.16, type:"sawtooth", gain:0.045, when:0.14});
+    } else if(name === "error"){
+      playTone({freq:200, dur:0.09, type:"square",   gain:0.05});
+      playTone({freq:160, dur:0.09, type:"square",   gain:0.05, when:0.06});
     }
   }
 
-  // ===== Rich UI: small VFX helpers =====
+  /* ===== VFX ===== */
+  const BURST_COLORS = ["#ff85b3","#ffcce5","#c77dff","#ffe066","#6edfc0","#ffb3d4","#ff9de2"];
+
   function burstAt(x, y, n=10){
-    for(let i=0;i<n;i++){
+    for(let i = 0; i < n; i++){
       const b = document.createElement("div");
       b.className = "burst";
-      const ang = Math.random()*Math.PI*2;
-      const r = 6 + Math.random()*18;
-      const dx = Math.cos(ang)*r;
-      const dy = Math.sin(ang)*r;
-      b.style.left = (x + dx) + "px";
-      b.style.top  = (y + dy) + "px";
-      b.style.transform = `translate(-50%,-50%) scale(${0.8+Math.random()*0.8})`;
+      const ang = Math.random() * Math.PI * 2;
+      const r   = 8 + Math.random() * 20;
+      b.style.left       = (x + Math.cos(ang)*r) + "px";
+      b.style.top        = (y + Math.sin(ang)*r) + "px";
+      b.style.background = BURST_COLORS[Math.floor(Math.random()*BURST_COLORS.length)];
+      b.style.width = b.style.height = (6 + Math.random()*8) + "px";
+      b.style.boxShadow  = `0 0 8px ${BURST_COLORS[0]}`;
       document.body.appendChild(b);
-      setTimeout(()=>b.remove(), 650);
+      setTimeout(() => b.remove(), 650);
     }
   }
 
@@ -784,14 +766,43 @@
     s.className = "sparkle";
     s.textContent = text;
     s.style.left = x + "px";
-    s.style.top = y + "px";
+    s.style.top  = y + "px";
     document.body.appendChild(s);
-    setTimeout(()=>s.remove(), 900);
+    setTimeout(() => s.remove(), 900);
   }
 
-  // ===== Sound UI toggle =====
+  function heartAt(x, y){
+    const hearts = ["💕","💖","🌸","⭐","💫","🌟"];
+    for(let i = 0; i < 3; i++){
+      setTimeout(() => {
+        const h = document.createElement("div");
+        h.className = "heartFloat";
+        h.textContent = hearts[Math.floor(Math.random()*hearts.length)];
+        h.style.left = (x + (Math.random()-0.5)*40) + "px";
+        h.style.top  = y + "px";
+        document.body.appendChild(h);
+        setTimeout(() => h.remove(), 1000);
+      }, i * 80);
+    }
+  }
+
+  function starDecoAt(x, y){
+    const decos = ["⭐","✨","💫","🌟","💖","🎀"];
+    for(let i = 0; i < 5; i++){
+      const d = document.createElement("div");
+      d.className = "star-deco";
+      d.textContent = decos[Math.floor(Math.random()*decos.length)];
+      d.style.left = (x + (Math.random()-0.5)*60) + "px";
+      d.style.top  = (y + (Math.random()-0.5)*40) + "px";
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 1300);
+    }
+  }
+
+  /* ===== Sound switch ===== */
   const soundSwitch = document.getElementById("soundSwitch");
-  const soundLabel = document.getElementById("soundLabel");
+  const soundLabel  = document.getElementById("soundLabel");
+
   function renderSoundUI(){
     if(!soundSwitch || !soundLabel) return;
     soundSwitch.classList.toggle("on", !!soundOn);
@@ -802,148 +813,95 @@
     soundOn = !soundOn;
     try{ localStorage.setItem(soundKey, soundOn ? "1" : "0"); }catch(e){}
     renderSoundUI();
-    // provide feedback (only if turning on)
     if(soundOn) playSfx("pick");
   }
   if(soundSwitch){
-    soundSwitch.addEventListener("click", () => { toggleSound(); });
-    soundSwitch.addEventListener("keydown", (e) => {
-      if(e.key === "Enter" || e.key === " "){
-        e.preventDefault();
-        toggleSound();
-      }
+    soundSwitch.addEventListener("click", toggleSound);
+    soundSwitch.addEventListener("keydown", e => {
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleSound(); }
     });
     renderSoundUI();
   }
 
-  // Initialize audio on first pointer interaction (Safari)
-  window.addEventListener("pointerdown", () => { initAudio(); }, { once:true });
-
-  // Prevent accidental page scroll bounce while interacting with the game surface
+  window.addEventListener("pointerdown", () => initAudio(), { once: true });
   const tableEl = document.querySelector(".table");
-  if(tableEl){
-    tableEl.addEventListener("touchmove", (e) => { e.preventDefault(); }, { passive:false });
-  }
+  if(tableEl) tableEl.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
 
-
-  const GRID = 6;
-  const CELLS = GRID * GRID;   // 36
-  const STACK_HEIGHT = 3;
+  /* ===== Game constants ===== */
+  const GRID_N = 6;
+  const CELLS  = GRID_N * GRID_N;
   const TRAY_MAX = 7;
-  // Total tiles cap by difficulty (prevents infinite-feel games)
-  const MAX_TOTAL_TILES_BY_DIFFICULTY = {
-    1: 45,  // 短め
-    2: 60,
-    3: 75,
-    4: 90,
-    5: 108  // 最長（36マス×3段まで）
-  };
 
+  const MAX_TOTAL_TILES_BY_DIFFICULTY = { 1:45, 2:60, 3:75, 4:90, 5:108 };
 
-  // Expanded animal set (more types -> harder)
+  /* cute animal icons */
   const ICONS = [
     "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐸",
     "🐷","🐮","🐵","🐔","🐧","🦉","🦄","🐙","🦀","🐢","🦖","🦋"
   ];
+
+  /* pastel tile colors */
   const COLORS = [
-    "#46d5ff","#9cffc5","#ffcf5e","#ff7aa5","#b6a1ff","#ff9b55",
-    "#7affff","#66ffb8","#ff5cff","#6ee1ff","#ffd36e","#a8ff7a",
-    "#ff9cc3","#a6ffe8","#c7b6ff","#ffe066","#9cd6ff","#b4ff9c",
-    "#f9a8ff","#9cffc5","#ffd36e","#7affff","#ffcf5e","#b6a1ff"
+    "#ffb3d1","#b8f0dd","#ffe28a","#c9b8ff","#ffc4a3","#a8e8ff",
+    "#ffcce5","#b8ffea","#ffd98a","#d4b8ff","#ffb8a0","#a8d8ff",
+    "#ff9dcf","#98e8cc","#ffcd6a","#bea8ff","#ffa888","#88d0ff",
+    "#f7a8e8","#a8f0d8","#ffc55a","#c8a8ff","#ff9878","#7ec8ff"
   ];
 
-  const elGrid = document.getElementById("grid");
-  const elTray = document.getElementById("tray");
-  const elTrayInfo = document.getElementById("trayInfo");
-  const elScore = document.getElementById("score");
-  const elClears = document.getElementById("clears");
-  const elBest = document.getElementById("best");
-  function bestKey(){
-    const d = Number(difficultySel.value);
-    return bestKeyPrefix + d;
-  }
+  const elGrid       = document.getElementById("grid");
+  const elTray       = document.getElementById("tray");
+  const elTrayInfo   = document.getElementById("trayInfo");
+  const elScore      = document.getElementById("score");
+  const elClears     = document.getElementById("clears");
+  const elBest       = document.getElementById("best");
+  const elToast      = document.getElementById("toast");
+  const overlay      = document.getElementById("overlay");
+  const overTitle    = document.getElementById("overTitle");
+  const overText     = document.getElementById("overText");
+  const overEmoji    = document.getElementById("modalEmoji");
+  const difficultySel= document.getElementById("difficulty");
+  const elTilesRemain  = document.getElementById("tilesRemain");
+  const elTilesTotal   = document.getElementById("tilesTotal");
+  const elTilesRemoved = document.getElementById("tilesRemoved");
+
+  const bestKeyPrefix = "triple_match_cute_best_v1_";
+  function bestKey(){ return bestKeyPrefix + Number(difficultySel.value); }
 
   function fmtTime(sec){
     sec = Math.max(0, Math.floor(sec));
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+    return String(Math.floor(sec/60)).padStart(2,"0") + ":" + String(sec%60).padStart(2,"0");
   }
 
   function loadBest(){
-    const raw = localStorage.getItem(bestKey());
-    if(!raw) return null;
     try{
+      const raw = localStorage.getItem(bestKey());
+      if(!raw) return null;
       const obj = JSON.parse(raw);
-      if(typeof obj.moves === "number" && typeof obj.timeSec === "number") return obj;
-      return null;
-    }catch(e){
-      return null;
-    }
+      if(typeof obj.moves === "number") return obj;
+    }catch(e){}
+    return null;
   }
-
-  function saveBest(obj){
-    localStorage.setItem(bestKey(), JSON.stringify(obj));
-  }
-
+  function saveBest(obj){ try{ localStorage.setItem(bestKey(), JSON.stringify(obj)); }catch(e){} }
   function renderBest(){
     const b = loadBest();
-    elBest.textContent = b ? `${b.moves} (${fmtTime(b.timeSec)})` : "-";
+    elBest.textContent = b ? `${b.moves}手` : "-";
   }
 
-  function isBetter(a, b){
-    // a better than b? (moves asc, then time asc)
-    if(!b) return true;
-    if(a.moves !== b.moves) return a.moves < b.moves;
-    return a.timeSec < b.timeSec;
-  }
-
-  const elTilesRemain = document.getElementById("tilesRemain");
-  const elTilesTotal = document.getElementById("tilesTotal");
-  const elTilesRemoved = document.getElementById("tilesRemoved");
-
-  let initialTotalTiles = 0;
-  let initialTypeTotals = new Map(); // type -> total at game start
-
-  function computeRemainingTiles(){
-    let board = 0;
-    for(const idx of activeIdx) board += stacks[idx].length;
-    return board + tray.length;
-  }
-
-  function updateTileCounters(){
-    const remain = computeRemainingTiles();
-    const removed = Math.max(0, initialTotalTiles - remain);
-    if(elTilesRemain) elTilesRemain.textContent = String(remain);
-    if(elTilesTotal) elTilesTotal.textContent = String(initialTotalTiles);
-    if(elTilesRemoved) elTilesRemoved.textContent = String(removed);
-  }
-
-  const elToast = document.getElementById("toast");
-  const overlay = document.getElementById("overlay");
-  const overTitle = document.getElementById("overTitle");
-  const overText = document.getElementById("overText");
-  const difficultySel = document.getElementById("difficulty");
-
-  const bestKeyPrefix = "triple_match_best_moves_time_v1_";
-
-  // State
-  let holes = Array.from({length:CELLS}, () => false);
+  /* ===== Game state ===== */
+  let holes   = Array.from({length:CELLS}, () => false);
   let activeIdx = [];
-  let stacks = Array.from({length:CELLS}, () => []);
-  let tray = [];
-  let score = 0;
-  let clears = 0;
-  let moves = 0; // taps
-  let startTimeMs = 0; // performance.now()
-
-  let history = []; // {cellIndex, tile, trayBefore, scoreBefore, clearsBefore, holesBefore, stacksBefore?}
+  let stacks  = Array.from({length:CELLS}, () => []);
+  let tray    = [];
+  let score   = 0, clears = 0, moves = 0;
+  let startTimeMs = 0;
+  let history = [];
+  let initialTotalTiles = 0;
+  let initialTypeTotals = new Map();
 
   function randInt(n){ return Math.floor(Math.random()*n); }
   function shuffleArr(a){
     for(let i=a.length-1;i>0;i--){
-      const j = randInt(i+1);
-      [a[i], a[j]] = [a[j], a[i]];
+      const j=randInt(i+1); [a[i],a[j]]=[a[j],a[i]];
     }
     return a;
   }
@@ -956,9 +914,6 @@
   function setScore(next){
     score = next;
     elScore.textContent = String(score);
-    const best = Math.max(Number(localStorage.getItem(bestKey())||"0"), score);
-    localStorage.setItem(bestKey(), String(best));
-    renderBest();
   }
   function setClears(next){
     clears = next;
@@ -966,7 +921,7 @@
   }
 
   function tileDisplay(type){
-    return { icon: ICONS[type] || "🐾", color: COLORS[type % COLORS.length] || "#46d5ff" };
+    return { icon: ICONS[type] || "🐾", color: COLORS[type % COLORS.length] };
   }
 
   function recomputeActive(){
@@ -974,413 +929,231 @@
     for(let i=0;i<CELLS;i++) if(!holes[i]) activeIdx.push(i);
   }
 
+  function computeRemainingTiles(){
+    let b=0;
+    for(const idx of activeIdx) b += stacks[idx].length;
+    return b + tray.length;
+  }
+
+  function updateTileCounters(){
+    const remain  = computeRemainingTiles();
+    const removed = Math.max(0, initialTotalTiles - remain);
+    if(elTilesRemain)  elTilesRemain.textContent  = String(remain);
+    if(elTilesTotal)   elTilesTotal.textContent   = String(initialTotalTiles);
+    if(elTilesRemoved) elTilesRemoved.textContent = String(removed);
+  }
+
+  /* ===== Hole generation ===== */
   function generateHoles(){
     const d = Number(difficultySel.value);
-
-    // 難易度（1〜5）: 数字が大きいほど難しい（=穴が減り、盤面タイルが増える）
-    // 1: 有効18 / 2:21 / 3:24 / 4:30 / 5:36
-    let holeTarget = 18; // d=1
-    if(d === 2) holeTarget = 15;
-    if(d === 3) holeTarget = 12;
-    if(d === 4) holeTarget = 6;
-    if(d === 5) holeTarget = 0;
-
-    // Clamp (keep at least 18 active cells)
-    holeTarget = Math.min(holeTarget, CELLS - 18);
+    let holeTarget = [18,15,12,6,0][d-1] ?? 12;
+    holeTarget = Math.min(holeTarget, CELLS-18);
     holeTarget = Math.max(0, holeTarget);
 
     holes = Array.from({length:CELLS}, () => false);
-    if(holeTarget === 0){
-      recomputeActive();
-      return;
+    if(holeTarget === 0){ recomputeActive(); return; }
+
+    const cands = [...Array(CELLS).keys()]; shuffleArr(cands);
+    function nH(idx){
+      const r=Math.floor(idx/GRID_N), c=idx%GRID_N, nb=[[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+      return nb.reduce((s,[rr,cc])=> (rr<0||cc<0||rr>=GRID_N||cc>=GRID_N)?s: s+(holes[rr*GRID_N+cc]?1:0), 0);
     }
-
-    const candidates = [...Array(CELLS).keys()];
-    shuffleArr(candidates);
-
-    function neighborHoles(idx){
-      const r = Math.floor(idx / GRID), c = idx % GRID;
-      let nH = 0;
-      const nb = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
-      for(const [rr,cc] of nb){
-        if(rr<0||cc<0||rr>=GRID||cc>=GRID) continue;
-        if(holes[rr*GRID+cc]) nH++;
-      }
-      return nH;
+    function score(idx){
+      const r=Math.floor(idx/GRID_N),c=idx%GRID_N;
+      return ((r===0||c===0||r===GRID_N-1||c===GRID_N-1)?0.7:0) + nH(idx)*1.25 + Math.random()*.25;
     }
-
-    function scoreCandidate(idx){
-      const r = Math.floor(idx / GRID), c = idx % GRID;
-      const borderPenalty = (r===0||c===0||r===GRID-1||c===GRID-1) ? 0.7 : 0.0;
-      const clusterPenalty = neighborHoles(idx) * 1.25;
-      return borderPenalty + clusterPenalty + Math.random()*0.25;
-    }
-
-    let placed = 0;
-    for(let k=0;k<candidates.length && placed < holeTarget;k++){
-      const idx = candidates[k];
-      if(holes[idx]) continue;
-      const p = scoreCandidate(idx);
-      if(p < 1.65){
-        holes[idx] = true;
-        placed++;
-      }
+    let placed=0;
+    for(const idx of cands){
+      if(placed>=holeTarget) break;
+      if(!holes[idx] && score(idx)<1.65){ holes[idx]=true; placed++; }
     }
     if(placed < holeTarget){
-      const rest = candidates.filter(i => !holes[i]);
-      shuffleArr(rest);
-      for(const idx of rest){
-        if(placed >= holeTarget) break;
-        holes[idx] = true;
-        placed++;
-      }
+      const rest = cands.filter(i=>!holes[i]); shuffleArr(rest);
+      for(const idx of rest){ if(placed>=holeTarget)break; holes[idx]=true; placed++; }
     }
-
     recomputeActive();
   }
 
+  /* ===== Stack init ===== */
   function chooseTypesUsed(total){
     const d = Number(difficultySel.value);
-    const maxTypes = ICONS.length;
-
-    // 種類数（多いほど揃えにくい）: 難易度差を大きく
-    let preferred = 6;   // d=1
-    if(d === 2) preferred = 9;
-    if(d === 3) preferred = 12;
-    if(d === 4) preferred = 18;
-    if(d === 5) preferred = 24;
-
-    preferred = Math.min(preferred, maxTypes);
-
-    // Want: total % t == 0 and (total/t) % 3 == 0 (balanced triples)
-    for(let t = preferred; t >= 6; t--){
-      if(total % t === 0){
-        const per = total / t;
-        if(per % 3 === 0) return t;
-      }
-    }
-    // If preferred < 6 (shouldn't), or no match found, try down to 3
-    for(let t = Math.min(preferred, maxTypes); t >= 3; t--){
-      if(total % t === 0){
-        const per = total / t;
-        if(per % 3 === 0) return t;
-      }
-    }
-    return 0; // not found
+    let pref = [6,9,12,18,24][d-1] ?? 12;
+    pref = Math.min(pref, ICONS.length);
+    for(let t=pref;t>=6;t--){ if(total%t===0 && (total/t)%3===0) return t; }
+    for(let t=Math.min(pref,ICONS.length);t>=3;t--){ if(total%t===0 && (total/t)%3===0) return t; }
+    return 0;
   }
 
   function makeBag(typesUsed, perType){
-    const bag = [];
-    let id = 1;
-    for(let t=0;t<typesUsed;t++){
-      for(let k=0;k<perType;k++){
-        bag.push({ id: id++, type: t });
-      }
-    }
-    shuffleArr(bag);
-    return bag;
+    const bag=[]; let id=1;
+    for(let t=0;t<typesUsed;t++) for(let k=0;k<perType;k++) bag.push({id:id++,type:t});
+    shuffleArr(bag); return bag;
   }
 
   function initStacks(){
     const MAX_ATTEMPTS = 30;
 
-    function makeBag(typesUsed, perType){
-      const bag = [];
-      let id = 1;
-      for(let t=0;t<typesUsed;t++){
-        for(let k=0;k<perType;k++){
-          bag.push({ id: id++, type: t });
-        }
-      }
-      shuffleArr(bag);
-      return bag;
-    }
-
     function pickFeasibleConfig(activeCells){
       const d = Number(difficultySel.value);
       const maxTotal = MAX_TOTAL_TILES_BY_DIFFICULTY[d] || 75;
-
-      // Try stackHeight from max down to 1 and pick the first total that supports balanced triples
-      const maxH = Math.max(1, Math.floor(maxTotal / activeCells));
-      for(let h = maxH; h >= 1; h--){
-        const total = activeCells * h;
-        const typesUsed = chooseTypesUsed(total);
-        if(typesUsed > 0){
-          const perType = total / typesUsed;
-          // perType is multiple of 3 by chooseTypesUsed
-          return { h, total, typesUsed, perType };
-        }
+      const maxH = Math.max(1, Math.floor(maxTotal/activeCells));
+      for(let h=maxH;h>=1;h--){
+        const total=activeCells*h, typesUsed=chooseTypesUsed(total);
+        if(typesUsed>0) return {h, total, typesUsed, perType:total/typesUsed};
       }
-      // Fallback: force h=1 and minimal typesUsed=3 with total multiple of 3 by reducing activeCells via extra holes (rare)
       return null;
     }
 
     function buildRandomStacks(){
-      stacks = Array.from({length:CELLS}, () => []);
-      const activeCells = activeIdx.length;
-
-      let cfg = pickFeasibleConfig(activeCells);
-
-      // Rare fallback: if no feasible total (due to awkward active cell count), add holes until activeCells becomes feasible
+      stacks = Array.from({length:CELLS},()=>[]);
+      let cfg = pickFeasibleConfig(activeIdx.length);
       if(!cfg){
-        // try up to 6 more holes to make activeCells divisible nicely
-        for(let extra=1; extra<=6; extra++){
-          // add one hole from active cells
-          const idx = activeIdx[randInt(activeIdx.length)];
-          holes[idx] = true;
-          recomputeActive();
-          const ac2 = activeIdx.length;
-          cfg = pickFeasibleConfig(ac2);
-          if(cfg) break;
+        for(let extra=1;extra<=6;extra++){
+          const idx=activeIdx[randInt(activeIdx.length)]; holes[idx]=true; recomputeActive();
+          cfg=pickFeasibleConfig(activeIdx.length); if(cfg) break;
         }
       }
-
-      // If still null (extremely rare), just make a small safe board
-      if(!cfg){
-        cfg = { h:1, total: activeIdx.length, typesUsed: 3, perType: (activeIdx.length/3)*3 };
-      }
-
-      const { total, typesUsed, perType } = cfg;
-
-      // perType must be integer
-      const bag = makeBag(typesUsed, perType);
-
-      // distribute
-      for(let i=0;i<total;i++){
-        const cellIndex = activeIdx[i % activeIdx.length];
-        stacks[cellIndex].push(bag[i]);
-      }
+      if(!cfg) cfg={h:1, total:activeIdx.length, typesUsed:3, perType:Math.floor(activeIdx.length/3)};
+      const {total,typesUsed,perType}=cfg;
+      const bag=makeBag(typesUsed,perType);
+      for(let i=0;i<total;i++) stacks[activeIdx[i%activeIdx.length]].push(bag[i]);
       for(const idx of activeIdx) shuffleArr(stacks[idx]);
-
       renderLegend(typesUsed);
       return cfg.h;
     }
 
-    // --- Solver (exists-solution check) ---
-    function isSolvable(){
-      const st = stacks.map(s => s.map(t => t.type));
-      const tray0 = [];
-      const memo = new Set();
-      let nodes = 0;
-      const NODE_LIMIT = 50000;
-      const ICONS_LEN = ICONS.length;
+    function topTypeCounts(stLocal){
+      const counts=new Map();
+      for(const idx of activeIdx){
+        const s=stLocal[idx]; if(!s.length) continue;
+        const t=s[s.length-1].type; counts.set(t,(counts.get(t)||0)+1);
+      }
+      return counts;
+    }
+    function hasTopTriple(stLocal){
+      for(const v of topTypeCounts(stLocal).values()) if(v>=3) return true;
+      return false;
+    }
 
-      function autoClearTray(tray){
-        const counts = new Array(ICONS_LEN).fill(0);
-        for(const t of tray) counts[t]++;
-        let changed = true;
-        while(changed){
-          changed = false;
-          for(let type=0; type<ICONS_LEN; type++){
-            while(counts[type] >= 3){
-              counts[type] -= 3;
-              changed = true;
-            }
-          }
-        }
-        const out = [];
-        for(let type=0; type<ICONS_LEN; type++){
-          for(let k=0;k<counts[type];k++) out.push(type);
-        }
+    function isSolvable(){
+      const st=stacks.map(s=>s.map(t=>t.type));
+      const memo=new Set(); let nodes=0;
+      const NODE_LIMIT=50000, IL=ICONS.length;
+
+      function autoClear(tray){
+        const cnt=new Array(IL).fill(0);
+        for(const t of tray) cnt[t]++;
+        let ch=true; while(ch){ch=false; for(let i=0;i<IL;i++) while(cnt[i]>=3){cnt[i]-=3;ch=true;}}
+        const out=[]; for(let i=0;i<IL;i++) for(let k=0;k<cnt[i];k++) out.push(i);
         return out;
       }
-
-      function keyOf(tray, stLocal){
-        // counts-based tray key (orderless)
-        const counts = new Array(ICONS_LEN).fill(0);
-        for(const t of tray) counts[t]++;
-        let tk = "";
-        for(let i=0;i<ICONS_LEN;i++){
-          const c = counts[i];
-          if(c) tk += i + ":" + c + ",";
-        }
-        // top signature for active stacks
-        let tops = "";
-        for(const idx of activeIdx){
-          const s = stLocal[idx];
-          const n = s.length;
-          if(n===0) tops += "x";
-          else tops += String.fromCharCode(65 + s[n-1]);
-          tops += n.toString(36) + ".";
-        }
-        return tk + "|" + tops;
+      function keyOf(tray,stL){
+        const cnt=new Array(IL).fill(0); for(const t of tray) cnt[t]++;
+        let tk=""; for(let i=0;i<IL;i++) if(cnt[i]) tk+=i+":"+cnt[i]+",";
+        let tops=""; for(const idx of activeIdx){const s=stL[idx],n=s.length; tops+=n?String.fromCharCode(65+s[n-1]):"x"; tops+=n.toString(36)+".";}
+        return tk+"|"+tops;
       }
-
-      function dfs(tray, stLocal){
-        nodes++;
-        if(nodes > NODE_LIMIT) return false;
-
-        // remaining
-        let remaining = 0;
-        for(const idx of activeIdx) remaining += stLocal[idx].length;
-        if(remaining === 0){
-          return autoClearTray(tray).length === 0;
-        }
-
-        tray = autoClearTray(tray);
-        if(tray.length > TRAY_MAX) return false;
-
-        const key = keyOf(tray, stLocal);
-        if(memo.has(key)) return false;
-        memo.add(key);
-
-        // Move ordering: prioritize completing triples
-        const tCount = new Array(ICONS_LEN).fill(0);
-        for(const t of tray) tCount[t]++;
-        const moves = [];
-        for(const idx of activeIdx){
-          const s = stLocal[idx];
-          if(!s.length) continue;
-          const type = s[s.length - 1];
-          const need = 3 - (tCount[type] % 3);
-          const score = (need === 1 ? 100 : need === 2 ? 50 : 10) + (s.length <= 2 ? 5 : 0);
-          moves.push({ idx, score });
-        }
-        moves.sort((a,b)=>b.score-a.score);
-
-        for(const m of moves){
-          const s = stLocal[m.idx];
-          const type = s.pop();
-          const tray2 = tray.slice();
-
-          // same as actual game: insert next to same type
-          let inserted = false;
-          for(let i=0;i<tray2.length;i++){
-            if(tray2[i] === type){
-              tray2.splice(i+1, 0, type);
-              inserted = true;
-              break;
-            }
-          }
-          if(!inserted) tray2.push(type);
-
-          if(tray2.length <= TRAY_MAX){
-            if(dfs(tray2, stLocal)) return true;
-          }
+      function dfs(tray,stL){
+        nodes++; if(nodes>NODE_LIMIT) return false;
+        let rem=0; for(const idx of activeIdx) rem+=stL[idx].length;
+        if(rem===0) return autoClear(tray).length===0;
+        tray=autoClear(tray); if(tray.length>TRAY_MAX) return false;
+        const key=keyOf(tray,stL); if(memo.has(key)) return false; memo.add(key);
+        const tCnt=new Array(IL).fill(0); for(const t of tray) tCnt[t]++;
+        const mv=[]; for(const idx of activeIdx){const s=stL[idx]; if(!s.length)continue; const type=s[s.length-1]; const need=3-(tCnt[type]%3); mv.push({idx,score:(need===1?100:need===2?50:10)+(s.length<=2?5:0)});}
+        mv.sort((a,b)=>b.score-a.score);
+        for(const m of mv){
+          const s=stL[m.idx], type=s.pop(), t2=tray.slice();
+          let ins=false; for(let i=0;i<t2.length;i++){if(t2[i]===type){t2.splice(i+1,0,type);ins=true;break;}} if(!ins) t2.push(type);
+          if(t2.length<=TRAY_MAX && dfs(t2,stL)) return true;
           s.push(type);
         }
         return false;
       }
-
-      return dfs(tray0, st);
+      return dfs([], st);
     }
 
-    for(let attempt=0; attempt<MAX_ATTEMPTS; attempt++){
+    for(let attempt=0;attempt<MAX_ATTEMPTS;attempt++){
       buildRandomStacks();
       if(!hasTopTriple(stacks)) continue;
-      if(isSolvable()){
-        setToast("", "");
-        return;
-      }
+      if(isSolvable()){ setToast("",""); return; }
     }
-
-    // fallback: keep last build
-    setToast("", "");
+    setToast("","");
   }
 
   function renderLegend(typesUsed){
-    const el = document.getElementById("legend");
-    el.innerHTML = "";
+    const el=document.getElementById("legend"); el.innerHTML="";
     for(let t=0;t<typesUsed;t++){
-      const chip = document.createElement("div");
-      chip.className = "chip";
-      const dot = document.createElement("div");
-      dot.className = "dot";
-      dot.style.setProperty("--c", COLORS[t % COLORS.length]);
-      const label = document.createElement("div");
-      label.textContent = `${ICONS[t]} Type ${t+1}`;
-      chip.appendChild(dot);
-      chip.appendChild(label);
-      el.appendChild(chip);
+      const chip=document.createElement("div"); chip.className="chip";
+      const dot=document.createElement("div"); dot.className="dot"; dot.style.setProperty("--c",COLORS[t%COLORS.length]);
+      const lbl=document.createElement("div"); lbl.textContent=`${ICONS[t]}`;
+      chip.appendChild(dot); chip.appendChild(lbl); el.appendChild(chip);
     }
   }
 
-  
-  function topTypeCounts(stLocal){
-    const counts = new Map();
-    for(const idx of activeIdx){
-      const s = stLocal[idx];
-      if(!s.length) continue;
-      const t = s[s.length-1].type !== undefined ? s[s.length-1].type : s[s.length-1];
-      counts.set(t, (counts.get(t)||0) + 1);
-    }
-    return counts;
+  /* ===== Snapshot / Undo ===== */
+  function snapshot(){
+    return {
+      stacksCopy: stacks.map(s=>s.slice()),
+      holesCopy:  holes.slice(),
+      trayBefore: tray.slice(),
+      scoreBefore:score, clearsBefore:clears
+    };
+  }
+  function restoreSnap(snap){
+    stacks = snap.stacksCopy.map(s=>s.slice());
+    holes  = snap.holesCopy.slice();
+    recomputeActive();
+    tray   = snap.trayBefore.slice();
+    score  = snap.scoreBefore;
+    clears = snap.clearsBefore;
+    setScore(score); setClears(clears);
+    renderTray(); renderGrid(); updateTileCounters();
+    overlay.classList.remove("show");
   }
 
+  /* ===== ensureTopTriple ===== */
   function hasTopTriple(stLocal){
-    const counts = topTypeCounts(stLocal);
-    for(const v of counts.values()){
-      if(v >= 3) return true;
+    const counts=new Map();
+    for(const idx of activeIdx){
+      const s=stLocal[idx]; if(!s.length) continue;
+      const t=s[s.length-1].type; counts.set(t,(counts.get(t)||0)+1);
     }
+    for(const v of counts.values()) if(v>=3) return true;
     return false;
   }
-
   function reshuffleTopOnly(){
-    // swap only top tile types among non-empty stacks (preserves per-type totals)
-    const idxs = [];
-    const tops = [];
-    for(const idx of activeIdx){
-      const s = stacks[idx];
-      if(!s.length) continue;
-      idxs.push(idx);
-      tops.push(s[s.length-1].type);
-    }
-    if(tops.length < 3) return false;
+    const idxs=[],tops=[];
+    for(const idx of activeIdx){const s=stacks[idx]; if(!s.length)continue; idxs.push(idx); tops.push(s[s.length-1].type);}
+    if(tops.length<3) return false;
     shuffleArr(tops);
-    for(let i=0;i<idxs.length;i++){
-      const idx = idxs[i];
-      stacks[idx][stacks[idx].length-1].type = tops[i];
-    }
+    for(let i=0;i<idxs.length;i++) stacks[idxs[i]][stacks[idxs[i]].length-1].type=tops[i];
     return true;
   }
-
   function reshuffleAllTiles(){
-    // full shuffle of tiles among active stacks (preserves totals)
-    const all = [];
-    const sizes = [];
-    for(const idx of activeIdx){
-      sizes.push(stacks[idx].length);
-      for(const tile of stacks[idx]) all.push(tile.type);
-    }
-    shuffleArr(all);
-    let p=0;
-    for(let k=0;k<activeIdx.length;k++){
-      const idx = activeIdx[k];
-      const sz = sizes[k];
-      for(let j=0;j<sz;j++){
-        stacks[idx][j].type = all[p++];
-      }
-      // keep random order in stack too
-      shuffleArr(stacks[idx]);
-    }
+    const all=[],sizes=[];
+    for(const idx of activeIdx){sizes.push(stacks[idx].length); for(const t of stacks[idx]) all.push(t.type);}
+    shuffleArr(all); let p=0;
+    for(let k=0;k<activeIdx.length;k++){const idx=activeIdx[k],sz=sizes[k]; for(let j=0;j<sz;j++) stacks[idx][j].type=all[p++]; shuffleArr(stacks[idx]);}
   }
-
   function ensureTopTriple(){
-    // Make sure there is at least one triple among currently selectable top tiles.
-    // This does NOT restrict player actions; it adjusts the visible top distribution while keeping type counts unchanged.
-    const MAX_TRIES = 18;
-    for(let t=0;t<MAX_TRIES;t++){
-      if(hasTopTriple(stacks)) return true;
-      reshuffleTopOnly();
-    }
-    // If still none, do a stronger shuffle and retry.
+    const MAX=18;
+    for(let t=0;t<MAX;t++) if(hasTopTriple(stacks)) return true; else reshuffleTopOnly();
     reshuffleAllTiles();
-    for(let t=0;t<MAX_TRIES;t++){
-      if(hasTopTriple(stacks)) return true;
-      reshuffleTopOnly();
-    }
+    for(let t=0;t<MAX;t++) if(hasTopTriple(stacks)) return true; else reshuffleTopOnly();
     return hasTopTriple(stacks);
   }
 
+  /* ===== Render ===== */
   function renderGrid(){
     elGrid.innerHTML = "";
     const trayFull = tray.length >= TRAY_MAX;
 
     function makeTile(type, cls, clickable, onClick){
-      const d = tileDisplay(type);
-      const el = document.createElement("div");
+      const d   = tileDisplay(type);
+      const el  = document.createElement("div");
       el.className = "tile " + cls + (trayFull && clickable ? " disabled" : "");
-      el.style.background = `linear-gradient(180deg, rgba(255,255,255,.18), rgba(0,0,0,.26)), ${d.color}`;
+      el.style.setProperty("--c", d.color);
 
       const icon = document.createElement("div");
       icon.className = "icon";
@@ -1388,12 +1161,10 @@
       el.appendChild(icon);
 
       if(clickable && !trayFull){
-        el.addEventListener("pointerdown", (ev) => {
-          // Rich UI: pop feedback + audio
-          ev.preventDefault();
-          ev.stopPropagation();
+        el.addEventListener("pointerdown", ev => {
+          ev.preventDefault(); ev.stopPropagation();
           el.classList.add("popped");
-          setTimeout(()=>el.classList.remove("popped"), 260);
+          setTimeout(() => el.classList.remove("popped"), 260);
           const r = el.getBoundingClientRect();
           sparkleAt(r.left + r.width/2, r.top + r.height/2, "✦");
           playSfx("pick");
@@ -1406,32 +1177,20 @@
     for(let i=0;i<CELLS;i++){
       const cell = document.createElement("div");
       cell.className = "cell" + (holes[i] ? " hole" : "");
-
-      if(holes[i]){
-        elGrid.appendChild(cell);
-        continue;
-      }
+      if(holes[i]){ elGrid.appendChild(cell); continue; }
 
       const s = stacks[i];
-      if(!s || s.length === 0){
-        elGrid.appendChild(cell);
-        continue;
-      }
+      if(!s || s.length === 0){ elGrid.appendChild(cell); continue; }
 
-      // Show up to 3 top layers as actual tiles (bottom->mid->top)
-      const top = s[s.length - 1];
-      const mid = s.length > 1 ? s[s.length - 2] : null;
-      const bot = s.length > 2 ? s[s.length - 3] : null;
+      const top = s[s.length-1];
+      const mid = s.length>1 ? s[s.length-2] : null;
+      const bot = s.length>2 ? s[s.length-3] : null;
 
-      if(bot) cell.appendChild(makeTile(bot.type, "layerBot", false));
-      if(mid) cell.appendChild(makeTile(mid.type, "layerMid", false));
+      if(bot) cell.appendChild(makeTile(bot.type,"layerBot",false,null));
+      if(mid) cell.appendChild(makeTile(mid.type,"layerMid",false,null));
 
-      // Top tile is clickable
-      cell.appendChild(makeTile(top.type, "layerTop", true, () => {
-        if(tray.length >= TRAY_MAX){
-          playSfx("error"); setToast("トレイが満杯です（7/7）。", "bad");
-          return;
-        }
+      cell.appendChild(makeTile(top.type,"layerTop",true,() => {
+        if(tray.length >= TRAY_MAX){ playSfx("error"); setToast("🙅 トレイが満杯だよ！(7/7)","bad"); return; }
         pick(i);
       }));
 
@@ -1445,12 +1204,14 @@
       const slot = document.createElement("div");
       slot.className = "slot";
       if(tray[i]){
-        const t = tray[i];
-        const d = tileDisplay(t.type);
+        const d  = tileDisplay(tray[i].type);
         const el = document.createElement("div");
         el.className = "tile";
         el.style.setProperty("--c", d.color);
-        el.textContent = d.icon;
+        const icon = document.createElement("div");
+        icon.className = "icon";
+        icon.textContent = d.icon;
+        el.appendChild(icon);
         slot.appendChild(el);
       }
       elTray.appendChild(slot);
@@ -1458,230 +1219,169 @@
     elTrayInfo.textContent = `${tray.length} / ${TRAY_MAX}`;
   }
 
+  /* ===== Auto-clear ===== */
   function autoClearOnce(){
     const counts = new Map();
     for(const t of tray) counts.set(t.type, (counts.get(t.type)||0)+1);
     for(const [type, cnt] of counts.entries()){
       if(cnt >= 3){
-        let removed = 0;
-        const next = [];
-        for(const t of tray){
-          if(t.type === type && removed < 3) removed++;
-          else next.push(t);
-        }
+        let removed=0; const next=[];
+        for(const t of tray){ if(t.type===type && removed<3) removed++; else next.push(t); }
         tray = next;
         clears += 1;
-        score += 30 + Math.max(0, (TRAY_MAX - tray.length)) * 2;
-        setClears(clears);
-        setScore(score);
+        score  += 30 + Math.max(0,(TRAY_MAX-tray.length))*2;
+        setClears(clears); setScore(score);
         playSfx("clear");
-        // Rich UI: burst near tray center
         const trayRect = elTray.getBoundingClientRect();
-        burstAt(trayRect.left + trayRect.width/2, trayRect.top + trayRect.height/2, 14);
-        sparkleAt(trayRect.left + trayRect.width/2, trayRect.top + trayRect.height/2, "✨");
-        setToast(`✅ ${ICONS[type]} を3つ消しました！`, "ok");
+        const cx = trayRect.left + trayRect.width/2;
+        const cy = trayRect.top  + trayRect.height/2;
+        burstAt(cx, cy, 16);
+        heartAt(cx, cy);
+        sparkleAt(cx, cy, "🌸");
+        setToast(`🎉 ${ICONS[type]} が3つ消えた！`, "ok");
         return true;
       }
     }
     return false;
   }
 
-  function snapshot(){
-    // lightweight snapshot for undo: copy stacks only for touched cell is enough, but holes/active can change on shuffle.
-    // For simplicity, keep full deep copy on each pick (still small: 36 cells, 3 each).
-    const stacksCopy = stacks.map(s => s.slice());
-    const holesCopy = holes.slice();
-    return { stacksCopy, holesCopy, trayBefore: tray.slice(), scoreBefore: score, clearsBefore: clears };
-  }
-
-  function restoreSnap(snap){
-    stacks = snap.stacksCopy.map(s => s.slice());
-    holes = snap.holesCopy.slice();
-    recomputeActive();
-    tray = snap.trayBefore.slice();
-    score = snap.scoreBefore;
-    clears = snap.clearsBefore;
-    setScore(score);
-    setClears(clears);
-    renderTray();
-    renderGrid();
-    updateTileCounters();
-    overlay.classList.remove("show");
-  }
-
+  /* ===== Pick ===== */
   function pick(cellIndex){
     const s = stacks[cellIndex];
     const top = s.pop();
     if(!top) return;
 
     moves += 1;
-
     history.push(snapshot());
     if(history.length > 30) history.shift();
 
-    // Insert next to same type (QoL)
-    let inserted = false;
+    let inserted=false;
     for(let i=0;i<tray.length;i++){
-      if(tray[i].type === top.type){
-        tray.splice(i+1, 0, top);
-        inserted = true;
-        break;
-      }
+      if(tray[i].type===top.type){ tray.splice(i+1,0,top); inserted=true; break; }
     }
     if(!inserted) tray.push(top);
-score += 1;
-    setScore(score);
+    score += 1; setScore(score);
 
-    renderTray();
-    renderGrid();
+    renderTray(); renderGrid();
 
-    let combo = 0;
-    while(autoClearOnce()){
-      combo++;
-      renderTray();
-      renderGrid();
+    let combo=0;
+    while(autoClearOnce()){ combo++; renderTray(); renderGrid(); }
+
+    if(combo >= 2){
+      playSfx("combo");
+      const trayRect = elTray.getBoundingClientRect();
+      starDecoAt(trayRect.left + trayRect.width*0.3, trayRect.top + trayRect.height/2);
+      starDecoAt(trayRect.left + trayRect.width*0.7, trayRect.top + trayRect.height/2);
+      setToast(`🔥 コンボ x${combo}！すごい！`, "ok");
     }
-    if(combo >= 2){ playSfx("combo"); const trayRect = elTray.getBoundingClientRect(); sparkleAt(trayRect.left + trayRect.width*0.35, trayRect.top + trayRect.height/2, "🔥"); sparkleAt(trayRect.left + trayRect.width*0.65, trayRect.top + trayRect.height/2, "🔥"); setToast(`🔥 コンボ x${combo}！`, "ok"); }
-    if(combo === 0) setToast(" ", "");
+    if(combo === 0) setToast("","");
 
+    updateTileCounters();
     checkEnd();
   }
 
+  /* ===== Check End ===== */
   function checkEnd(){
     const remaining = stacks.reduce((a,s)=>a+s.length,0);
 
-    // If board is empty, we should resolve tray clears (if any) and then decide clear/lose.
     if(remaining === 0){
-      // Auto-resolve any triples that already exist in tray
-      let cleared = false;
+      let cleared=false;
       while(true){
-        const counts = new Map();
-        for(const t of tray) counts.set(t.type, (counts.get(t.type)||0)+1);
-        const hasTriple = [...counts.values()].some(v=>v>=3);
-        if(!hasTriple) break;
-        // Use existing clear logic
-        const did = autoClearOnce();
-        if(!did) break;
-        cleared = true;
-        renderTray();
-        renderGrid();
+        const counts=new Map(); for(const t of tray) counts.set(t.type,(counts.get(t.type)||0)+1);
+        if(![...counts.values()].some(v=>v>=3)) break;
+        if(!autoClearOnce()) break;
+        cleared=true; renderTray(); renderGrid();
       }
-
       if(tray.length === 0){
-        overTitle.textContent = "Clear!";
-      playSfx("win");
-      const gRect = elGrid.getBoundingClientRect();
-      burstAt(gRect.left + gRect.width/2, gRect.top + gRect.height/2, 24);
-      sparkleAt(gRect.left + gRect.width/2, gRect.top + gRect.height/2, "🎉");
-      const timeSec = (performance.now() - startTimeMs) / 1000;
-      const cur = { moves: moves, timeSec: timeSec };
-      const best = loadBest();
-      const better = (!best) || (cur.moves < best.moves) || (cur.moves === best.moves && cur.timeSec < best.timeSec);
-      if(better) saveBest(cur);
-      renderBest();
-      overText.textContent = `おめでとう！全消しクリア。Score: ${score} / Moves: ${moves} / Time: ${fmtTime(timeSec)}` + (better ? "（Best更新）" : "");
+        overEmoji.textContent = "🎉";
+        overTitle.textContent = "クリア！🌟";
+        playSfx("win");
+        const gRect = elGrid.getBoundingClientRect();
+        burstAt(gRect.left+gRect.width/2, gRect.top+gRect.height/2, 28);
+        starDecoAt(gRect.left+gRect.width/2, gRect.top+gRect.height/2);
+        const timeSec = (performance.now()-startTimeMs)/1000;
+        const cur={moves,timeSec};
+        const best=loadBest();
+        const better=(!best)||(cur.moves<best.moves)||(cur.moves===best.moves&&cur.timeSec<best.timeSec);
+        if(better) saveBest(cur);
+        renderBest();
+        overText.textContent = `やったー！全部消した！🐾\nスコア: ${score} / ${moves}手 / ${fmtTime(timeSec)}` + (better ? "\n🏆 ベスト更新！" : "");
         overlay.classList.add("show");
         return;
       }
-
-      // Board empty but tray still has tiles and no triples => stuck
-      overTitle.textContent = "Game Over";
+      overEmoji.textContent = "😿";
+      overTitle.textContent = "ゲームオーバー…";
       playSfx("lose");
-      overText.textContent = `盤面のタイルがなくなりましたが、トレイに残りがあり消せません。Score: ${score}`;
+      overText.textContent = `盤面が空になったけどトレイに残りがあって消せないよ…\nスコア: ${score}`;
       overlay.classList.add("show");
       return;
     }
 
-    // Normal loss: tray full and no triple available
     if(tray.length >= TRAY_MAX){
-      const counts = new Map();
-      for(const t of tray) counts.set(t.type, (counts.get(t.type)||0)+1);
-      const hasTriple = [...counts.values()].some(v=>v>=3);
-      if(!hasTriple){
-        overTitle.textContent = "Game Over";
-        overText.textContent = `トレイが満杯で消せません。Score: ${score}`;
+      const counts=new Map(); for(const t of tray) counts.set(t.type,(counts.get(t.type)||0)+1);
+      if(![...counts.values()].some(v=>v>=3)){
+        overEmoji.textContent = "😢";
+        overTitle.textContent = "ゲームオーバー…";
+        overText.textContent = `トレイが満杯で消せないよ…\nスコア: ${score}`;
         overlay.classList.add("show");
       }
     }
   }
 
+  /* ===== Shuffle ===== */
   function shuffleWithHoles(){
-    // Shuffle remaining BOARD tiles only (keep holes, keep counts, keep tray).
-    const all = [];
-    const sizes = [];
+    const all=[],sizes=[];
     for(const idx of activeIdx){
-      const s = stacks[idx];
-      sizes.push(s.length);
-      for(const tile of s) all.push(tile.type);
+      sizes.push(stacks[idx].length);
+      for(const tile of stacks[idx]) all.push(tile.type);
     }
-    shuffleArr(all);
-    let p = 0;
+    shuffleArr(all); let p=0;
     for(let k=0;k<activeIdx.length;k++){
-      const idx = activeIdx[k];
-      const sz = sizes[k];
-      const s = stacks[idx];
-      for(let j=0;j<sz;j++){
-        s[j].type = all[p++];
-      }
-      shuffleArr(s); // mix within stack
+      const idx=activeIdx[k],sz=sizes[k];
+      for(let j=0;j<sz;j++) stacks[idx][j].type=all[p++];
+      shuffleArr(stacks[idx]);
     }
-    // Ensure at least one top-triple at start? NOT enforced here; shuffle is user choice.
-    renderGrid();
-    playSfx("shuffle"); setToast("🔀 シャッフルしました。", "");
-    updateTileCounters();
-    checkEnd();
+    renderGrid(); playSfx("shuffle");
+    setToast("🔀 シャッフルしたよ！","");
+    updateTileCounters(); checkEnd();
   }
 
   function undo(){
-    const snap = history.pop();
-    if(!snap){ setToast("Undoできる手がありません。", "bad"); return; }
-    restoreSnap(snap);
-    playSfx("undo"); setToast("↩️ 1手戻しました。", "");
+    const snap=history.pop();
+    if(!snap){ setToast("↩️ もう戻せないよ！","bad"); return; }
+    restoreSnap(snap); playSfx("undo"); setToast("↩️ 1手もどしたよ！","");
   }
 
+  /* ===== New game ===== */
   function startNew(){
     overlay.classList.remove("show");
-    history = [];
-    tray = [];
-    setScore(0);
-    setClears(0);
-    moves = 0;
-    startTimeMs = performance.now();
+    history=[]; tray=[];
+    setScore(0); setClears(0); moves=0;
+    startTimeMs=performance.now();
     renderBest();
-    generateHoles();
-    initStacks();
-    ensureTopTriple();
+    generateHoles(); initStacks(); ensureTopTriple();
 
-    // Record initial totals (invariant across shuffle)
-    initialTypeTotals = new Map();
-    for(const idx of activeIdx){
-      for(const tile of stacks[idx]){
-        initialTypeTotals.set(tile.type, (initialTypeTotals.get(tile.type)||0) + 1);
-      }
-    }
-    initialTotalTiles = 0;
-    for(const v of initialTypeTotals.values()) initialTotalTiles += v;
+    initialTypeTotals=new Map();
+    for(const idx of activeIdx)
+      for(const tile of stacks[idx])
+        initialTypeTotals.set(tile.type,(initialTypeTotals.get(tile.type)||0)+1);
+    initialTotalTiles=0;
+    for(const v of initialTypeTotals.values()) initialTotalTiles+=v;
 
-    renderTray();
-    renderGrid();
-    updateTileCounters();
+    renderTray(); renderGrid(); updateTileCounters();
   }
 
-  // Buttons
+  /* ===== Event bindings ===== */
   document.getElementById("newGame").addEventListener("click", startNew);
-  document.getElementById("shuffle").addEventListener("click", () => {
-    history.push(snapshot());
-    shuffleWithHoles();
-  });
+  document.getElementById("shuffle").addEventListener("click", () => { history.push(snapshot()); shuffleWithHoles(); });
   document.getElementById("undo").addEventListener("click", undo);
   document.getElementById("closeOver").addEventListener("click", () => overlay.classList.remove("show"));
   document.getElementById("restartOver").addEventListener("click", startNew);
-
-  // Difficulty change -> restart for clean balance
   difficultySel.addEventListener("change", () => startNew());
 
   renderBest();
   startNew();
+
 })();
 </script>
 </body>
