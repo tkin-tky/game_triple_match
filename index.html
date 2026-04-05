@@ -1850,10 +1850,14 @@
           history.push(snapshot());
           if (history.length > 30) history.shift();
 
+          // 同種が連続しているランの末尾に挿入（なければ末尾に追加）
           let inserted = false;
           for (let i = 0; i < tray.length; i++) {
             if (tray[i].type === top.type) {
-              tray.splice(i + 1, 0, top);
+              // この同種ランの終端を探す
+              let j = i;
+              while (j + 1 < tray.length && tray[j + 1].type === top.type) j++;
+              tray.splice(j + 1, 0, top);
               inserted = true;
               break;
             }
