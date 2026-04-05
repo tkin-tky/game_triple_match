@@ -1817,18 +1817,11 @@
 
         /* ===== Auto-clear ===== */
         function autoClearOnce() {
-          const counts = new Map();
-          for (const t of tray)
-            counts.set(t.type, (counts.get(t.type) || 0) + 1);
-          for (const [type, cnt] of counts.entries()) {
-            if (cnt >= 3) {
-              let removed = 0;
-              const next = [];
-              for (const t of tray) {
-                if (t.type === type && removed < 3) removed++;
-                else next.push(t);
-              }
-              tray = next;
+          // 連続する3つが同じ種類かチェック
+          for (let i = 0; i <= tray.length - 3; i++) {
+            if (tray[i].type === tray[i + 1].type && tray[i].type === tray[i + 2].type) {
+              const type = tray[i].type;
+              tray.splice(i, 3);
               clears += 1;
               score += 30 + Math.max(0, TRAY_MAX - tray.length) * 2;
               setClears(clears);
@@ -1905,10 +1898,7 @@
           if (remaining === 0) {
             let cleared = false;
             while (true) {
-              const counts = new Map();
-              for (const t of tray)
-                counts.set(t.type, (counts.get(t.type) || 0) + 1);
-              if (![...counts.values()].some((v) => v >= 3)) break;
+              if (!tray.some((t, i) => i + 2 < tray.length && t.type === tray[i+1].type && t.type === tray[i+2].type)) break;
               if (!autoClearOnce()) break;
               cleared = true;
               renderTray();
@@ -1980,10 +1970,7 @@
           }
 
           if (tray.length >= TRAY_MAX) {
-            const counts = new Map();
-            for (const t of tray)
-              counts.set(t.type, (counts.get(t.type) || 0) + 1);
-            if (![...counts.values()].some((v) => v >= 3)) {
+            if (!tray.some((t, i) => i + 2 < tray.length && t.type === tray[i+1].type && t.type === tray[i+2].type)) {
               overEmoji.textContent = "😢";
               overTitle.textContent = "ゲームオーバー…";
               overText.textContent = `トレイが満杯で消せないよ…\nスコア: ${score}`;
