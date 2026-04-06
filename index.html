@@ -1817,25 +1817,26 @@
 
         /* ===== Auto-clear ===== */
         function autoClearOnce() {
-          // 連続する3つが同じ種類かチェック
-          for (let i = 0; i <= tray.length - 3; i++) {
-            if (tray[i].type === tray[i + 1].type && tray[i].type === tray[i + 2].type) {
-              const type = tray[i].type;
-              tray.splice(i, 3);
-              clears += 1;
-              score += 30 + Math.max(0, TRAY_MAX - tray.length) * 2;
-              setClears(clears);
-              setScore(score);
-              playSfx("clear");
-              const trayRect = elTray.getBoundingClientRect();
-              const cx = trayRect.left + trayRect.width / 2;
-              const cy = trayRect.top + trayRect.height / 2;
-              burstAt(cx, cy, 16);
-              heartAt(cx, cy);
-              sparkleAt(cx, cy, "🌸");
-              setToast(`🎉 ${ICONS[type]} が3つ消えた！`, "ok");
-              return true;
-            }
+          // 末尾の3つが同じ種類かだけチェック
+          const n = tray.length;
+          if (n >= 3 &&
+              tray[n-3].type === tray[n-2].type &&
+              tray[n-3].type === tray[n-1].type) {
+            const type = tray[n-3].type;
+            tray.splice(n - 3, 3);
+            clears += 1;
+            score += 30 + Math.max(0, TRAY_MAX - tray.length) * 2;
+            setClears(clears);
+            setScore(score);
+            playSfx("clear");
+            const trayRect = elTray.getBoundingClientRect();
+            const cx = trayRect.left + trayRect.width / 2;
+            const cy = trayRect.top + trayRect.height / 2;
+            burstAt(cx, cy, 16);
+            heartAt(cx, cy);
+            sparkleAt(cx, cy, "🌸");
+            setToast(`🎉 ${ICONS[type]} が3つ消えた！`, "ok");
+            return true;
           }
           return false;
         }
@@ -1850,19 +1851,8 @@
           history.push(snapshot());
           if (history.length > 30) history.shift();
 
-          // 同種が連続しているランの末尾に挿入（なければ末尾に追加）
-          let inserted = false;
-          for (let i = 0; i < tray.length; i++) {
-            if (tray[i].type === top.type) {
-              // この同種ランの終端を探す
-              let j = i;
-              while (j + 1 < tray.length && tray[j + 1].type === top.type) j++;
-              tray.splice(j + 1, 0, top);
-              inserted = true;
-              break;
-            }
-          }
-          if (!inserted) tray.push(top);
+          // 常にトレイ末尾に追加
+          tray.push(top);
           score += 1;
           setScore(score);
 
@@ -1902,7 +1892,8 @@
           if (remaining === 0) {
             let cleared = false;
             while (true) {
-              if (!tray.some((t, i) => i + 2 < tray.length && t.type === tray[i+1].type && t.type === tray[i+2].type)) break;
+              const n = tray.length;
+              if (!(n >= 3 && tray[n-3].type === tray[n-2].type && tray[n-3].type === tray[n-1].type)) break;
               if (!autoClearOnce()) break;
               cleared = true;
               renderTray();
@@ -1974,7 +1965,8 @@
           }
 
           if (tray.length >= TRAY_MAX) {
-            if (!tray.some((t, i) => i + 2 < tray.length && t.type === tray[i+1].type && t.type === tray[i+2].type)) {
+            const n = tray.length;
+            if (!(n >= 3 && tray[n-3].type === tray[n-2].type && tray[n-3].type === tray[n-1].type)) {
               overEmoji.textContent = "😢";
               overTitle.textContent = "ゲームオーバー…";
               overText.textContent = `トレイが満杯で消せないよ…\nスコア: ${score}`;
